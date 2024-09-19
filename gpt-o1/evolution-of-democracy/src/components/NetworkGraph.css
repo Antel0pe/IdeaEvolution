@@ -1,0 +1,22 @@
+/* src/components/NetworkGraph.css */
+
+.network-graph-container {
+    padding: 20px;
+    background-color: #fff;
+    border-top: 1px solid #ecf0f1;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+  }
+  
+  .network-graph-container h3 {
+    margin-top: 0;
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  
+  .network-graph-container .vis-network {
+    height: 300px;
+    border: 1px solid #ecf0f1;
+    border-radius: 8px;
+  }
+  

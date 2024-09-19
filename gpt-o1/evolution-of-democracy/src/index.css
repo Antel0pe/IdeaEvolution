@@ -1,0 +1,25 @@
+/* src/index.css */
+
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif; /* Modern, clean font */
+  background-color: #f9f9f9;
+  color: #333;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Merriweather', serif; /* Elegant serif font for headings */
+}
+
+a {
+  color: #3498db;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+#root {
+  height: 100vh;
+}

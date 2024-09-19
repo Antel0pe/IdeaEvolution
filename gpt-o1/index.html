@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Evolution of Democracy</title>
+    <style>
+        /* CSS Styles */
+
+        body {
+            margin: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f0f4f8;
+        }
+
+        #container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #map {
+            flex: 2;
+            position: relative;
+        }
+
+        #map img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #text-area {
+            flex: 1;
+            background-color: #fff;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #timeline {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        #timeline input[type="range"] {
+            width: 100%;
+        }
+
+        .pin {
+            position: absolute;
+            background-color: #e74c3c;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            transform: translate(-50%, -100%);
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .pin:hover {
+            background-color: #f1c40f;
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: #fff;
+            padding: 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            display: none;
+            white-space: nowrap;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+
+        p {
+            color: #34495e;
+            line-height: 1.6;
+        }
+
+        /* Scrollbar Styling */
+        #text-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #text-area::-webkit-scrollbar-thumb {
+            background-color: #bdc3c7;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="map">
+            <img src="https://i.imgur.com/Jm8oH1E.jpg" alt="World Map">
+            <!-- Pins will be added here dynamically -->
+        </div>
+        <div id="text-area">
+            <h2>Welcome to The Evolution of Democracy</h2>
+            <p>
+                Use the timeline slider below to explore key events in the history of democracy. Click on map pins to learn more about each location.
+            </p>
+        </div>
+    </div>
+    <div id="timeline">
+        <input type="range" id="timeline-slider" min="0" max="6" value="0">
+    </div>
+
+    <script>
+        // JavaScript Code
+
+        // Event Data
+        const events = [
+            {
+                date: -508,
+                title: "Birth of Athenian Democracy",
+                text: "In 508 BCE, Cleisthenes introduced political reforms in Athens, laying the foundation for the first known democracy. Citizens could participate directly in decision-making.",
+                pins: [
+                    { x: 56, y: 65, label: "Athens, Greece" }
+                ]
+            },
+            {
+                date: 1215,
+                title: "Signing of the Magna Carta",
+                text: "The Magna Carta was signed in 1215, limiting the powers of the English monarchy and establishing legal rights for nobles, influencing future democratic documents.",
+                pins: [
+                    { x: 47, y: 50, label: "Runnymede, England" }
+                ]
+            },
+            {
+                date: 1776,
+                title: "American Declaration of Independence",
+                text: "On July 4, 1776, the Thirteen Colonies declared independence from British rule, emphasizing individual liberty and self-governance.",
+                pins: [
+                    { x: 22, y: 45, label: "Philadelphia, USA" }
+                ]
+            },
+            {
+                date: 1789,
+                title: "French Revolution",
+                text: "The French Revolution began in 1789, overthrowing the monarchy and establishing a republic, significantly impacting democratic ideas worldwide.",
+                pins: [
+                    { x: 50, y: 52, label: "Paris, France" }
+                ]
+            },
+            {
+                date: 1918,
+                title: "Women's Suffrage Movement",
+                text: "In 1918, women over 30 gained the right to vote in the UK. This milestone paved the way for gender equality in democratic participation globally.",
+                pins: [
+                    { x: 47, y: 50, label: "United Kingdom" }
+                ]
+            },
+            {
+                date: 1948,
+                title: "Universal Declaration of Human Rights",
+                text: "Adopted in 1948, the declaration set out fundamental human rights to be universally protected, reinforcing democratic values worldwide.",
+                pins: [
+                    { x: 45, y: 50, label: "Paris, France" }
+                ]
+            },
+            {
+                date: 1989,
+                title: "Fall of the Berlin Wall",
+                text: "In 1989, the Berlin Wall fell, symbolizing the end of the Cold War and promoting democracy in Eastern Europe.",
+                pins: [
+                    { x: 53, y: 48, label: "Berlin, Germany" }
+                ]
+            }
+        ];
+
+        const mapElement = document.getElementById('map');
+        const textArea = document.getElementById('text-area');
+        const timelineSlider = document.getElementById('timeline-slider');
+        const maxIndex = events.length - 1;
+
+        // Initialize Slider
+        timelineSlider.max = maxIndex;
+
+        // Update Content Function
+        function updateContent(index) {
+            const event = events[index];
+
+            // Update Text Area
+            textArea.innerHTML = `
+                <h2>${event.title} (${event.date > 0 ? event.date : Math.abs(event.date) + ' BCE'})</h2>
+                <p>${event.text}</p>
+            `;
+
+            // Clear Existing Pins
+            document.querySelectorAll('.pin').forEach(pin => pin.remove());
+
+            // Add New Pins
+            event.pins.forEach(pinData => {
+                const pin = document.createElement('div');
+                pin.classList.add('pin');
+                pin.style.left = pinData.x + '%';
+                pin.style.top = pinData.y + '%';
+                pin.title = pinData.label;
+
+                // Tooltip
+                const tooltip = document.createElement('div');
+                tooltip.classList.add('tooltip');
+                tooltip.innerText = pinData.label;
+                pin.appendChild(tooltip);
+
+                pin.addEventListener('mouseover', () => {
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = '20px';
+                    tooltip.style.top = '-10px';
+                });
+
+                pin.addEventListener('mouseout', () => {
+                    tooltip.style.display = 'none';
+                });
+
+                pin.addEventListener('click', () => {
+                    alert(pinData.label);
+                });
+
+                mapElement.appendChild(pin);
+            });
+        }
+
+        // Initial Content
+        updateContent(0);
+
+        // Slider Event Listener
+        timelineSlider.addEventListener('input', (e) => {
+            updateContent(e.target.value);
+        });
+    </script>
+</body>
+</html>

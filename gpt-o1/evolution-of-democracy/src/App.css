@@ -1,0 +1,33 @@
+/* src/App.css */
+
+/* ... existing styles ... */
+
+.details-section {
+  grid-area: details;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Assign an ID for scrolling */
+.details-section {
+  grid-area: details;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.details-section::before {
+  content: '';
+  display: block;
+  height: 60px; /* Height of the header */
+  margin-top: -60px; /* Negative margin for offset */
+}
+
+.details-section {
+  /* Add a name attribute for react-scroll */
+  scroll-margin-top: 60px;
+}
