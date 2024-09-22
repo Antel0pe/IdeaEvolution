@@ -1,74 +1,109 @@
 import pandas as pd
 from scipy.spatial.distance import pdist, squareform
-from scipy.cluster.hierarchy import linkage, to_tree
+from Bio.Phylo.TreeConstruction import DistanceTreeConstructor, DistanceMatrix
 from Bio import Phylo
-from io import StringIO
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Step 1: Read the CSV data
-# Replace 'data.csv' with the path to your CSV file
-data = pd.read_csv('ACosmicHuntInTheBerberSky-Dataset.csv')
+csv_file = 'ACosmicHuntInTheBerberSky-Dataset.csv'  # Update this path if necessary
+try:
+    data = pd.read_csv(csv_file)
+except Exception as e:
+    print(f"Error reading CSV file: {e}")
+    exit(1)
 
-# Step 2: Transpose the data so that taxa are languages, and characters are sentences
-# Set 'Sentence' as the index
+# Step 2: Verify the number of columns
+expected_columns = 1 + 47  # 'Sentence' + 48 taxa
+actual_columns = data.shape[1]
+if actual_columns != expected_columns:
+    print(f"Error: Expected {expected_columns} columns, but got {actual_columns}.")
+    exit(1)
+
+# Step 3: Check for missing values
+if data.isnull().values.any():
+    print("Error: The data contains missing values. Please handle them before proceeding.")
+    print(data[data.isnull().any(axis=1)])
+    exit(1)
+
+# Step 4: Transpose the data so that taxa are languages, and characters are sentences
 data.set_index('Sentence', inplace=True)
-# Transpose the DataFrame
 data_transposed = data.transpose()
 
-# Display the transposed data (optional)
+# Get taxa (language) names
+taxa = data_transposed.index.tolist()
+
+# Step 5: Verify the number of taxa
+if len(taxa) != 47:
+    print(f"Error: Expected 47 taxa, but got {len(taxa)}.")
+    exit(1)
+
 print("Transposed Data:")
 print(data_transposed.head())
 
-# Step 3: Compute the distance matrix
-# Use Hamming distance (number of differing characters)
-# Since Hamming distance in scipy's 'hamming' metric returns the proportion of differing bits,
-# multiply by the number of bits to get the actual count
-num_bits = data_transposed.shape[1]
-distance_matrix = pdist(data_transposed.values, metric='hamming') * num_bits
+# Step 6: Compute the distance matrix using Hamming distance
+# Hamming distance calculates the proportion of differing characters
+distance_matrix = pdist(data_transposed.values, metric='hamming')
 
-# Convert the distance matrix to a condensed form if needed
-# (Linkage function accepts condensed distance matrices)
-print("\nDistance Matrix (Condensed):")
-print(distance_matrix)
+# Convert the distance matrix to a square form
+square_dm = squareform(distance_matrix)
 
-# Step 4: Perform hierarchical clustering using UPGMA
-linked = linkage(distance_matrix, method='average')  # 'average' corresponds to UPGMA
+# Step 7: Verify the distance matrix shape
+print(f"\nNumber of taxa: {len(taxa)}")
+print(f"Distance matrix shape: {square_dm.shape}")
 
-# Step 5: Convert the linkage matrix to Newick format
-def get_newick(node, parent_distance, leaf_names, newick=''):
+# Step 8: Extract the lower triangle from the square distance matrix
+def get_lower_triangle(square_matrix):
     """
-    Recursively traverse the tree to generate a Newick string.
+    Extracts the lower triangle of a square matrix in a format suitable for DistanceMatrix.
+    Each row i contains the distances from taxa[i] to taxa[0] through taxa[i-1].
     """
-    if node.is_leaf():
-        return f"{leaf_names[node.id]}:{parent_distance - node.dist:.2f}"
-    else:
-        left_newick = get_newick(node.get_left(), node.dist, leaf_names)
-        right_newick = get_newick(node.get_right(), node.dist, leaf_names)
-        return f"({left_newick},{right_newick})"
+    lower_triangle = []
+    for i in range(len(square_matrix)):
+        row = list(square_matrix[i, :i])
+        lower_triangle.append(row)
+    return lower_triangle
 
-# Convert the linkage matrix to a tree
-tree = to_tree(linked, rd=True)
+lower_triangle = get_lower_triangle(square_dm)
 
-# Get leaf names
-leaf_names = data_transposed.index.tolist()
+# Step 9: Debugging - Verify the lower triangle structure
+print("\nVerifying the lower triangle format:")
+error_found = False
+for i, row in enumerate(lower_triangle):
+    expected_length = i
+    actual_length = len(row)
+    if actual_length != expected_length:
+        print(f"Error: Taxon '{taxa[i]}' has {actual_length} distances, expected {expected_length}.")
+        error_found = True
+    # Optional: Print the first few distance entries for inspection
+    if i < 5:
+        print(f"Taxon '{taxa[i]}' distances: {row}")
 
-# Generate Newick string
-newick_str = get_newick(tree, tree.dist, leaf_names) + ";"
+if error_found:
+    print("\nPlease review the above errors and ensure that each taxon has the correct number of distance entries.")
+    exit(1)
+else:
+    print("\nAll taxa have the correct number of distance entries.")
 
-print("\nNewick Tree:")
-print(newick_str)
+# Step 10: Create the DistanceMatrix object
+try:
+    dm = DistanceMatrix(names=taxa, matrix=lower_triangle)
+    print("\nDistanceMatrix successfully created.")
+except ValueError as ve:
+    print(f"\nError creating DistanceMatrix: {ve}")
+    exit(1)
 
-# Step 6: Parse the Newick string with Bio.Phylo and visualize it
-phylo_tree = Phylo.read(StringIO(newick_str), "newick")
+# Step 11: Construct the tree using UPGMA
+constructor = DistanceTreeConstructor()
+tree = constructor.upgma(dm)
 
-# Draw the tree
+# Step 12: Visualize the tree
 plt.figure(figsize=(20, 10))  # Adjust the size as needed
-Phylo.draw(phylo_tree, do_show=False)
+Phylo.draw(tree, do_show=False)
 plt.title("Phylogenetic Tree of Languages (UPGMA)", fontsize=15)
 plt.show()
 
 # Optional: Save the tree to a file in Newick format
-with open("output_tree.newick", "w") as f:
-    f.write(newick_str)
+Phylo.write(tree, "output_tree.newick", "newick")
 
 print("\nPhylogenetic tree has been saved to 'output_tree.newick'")
