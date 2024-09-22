@@ -85,6 +85,7 @@ if error_found:
 else:
     print("\nAll taxa have the correct number of distance entries.")
 
+print(lower_triangle)
 # Step 10: Create the DistanceMatrix object
 try:
     dm = DistanceMatrix(names=taxa, matrix=lower_triangle)
